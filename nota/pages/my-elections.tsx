@@ -1,0 +1,200 @@
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import Layout from '../components/Layout'
+import { auth } from '../lib/firebase'
+import { downloadResultsAsXLSX } from '../utils/excel'
+
+type Election = {
+  id: string
+  title: string
+  closed: boolean
+  created_at: string
+  voteCount: number
+}
+
+export default function MyElections(){
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [elections, setElections] = useState<Election[]>([])
+  const [loading, setLoading] = useState(true)
+  const [closingId, setClosingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      if (!currentUser) {
+        router.push('/login')
+      } else {
+        setUser(currentUser)
+        loadElections(currentUser.phoneNumber)
+      }
+    })
+    return () => unsubscribe()
+  }, [router])
+
+  async function loadElections(phoneNumber: string) {
+    try {
+      const response = await fetch(`/api/getMyElections?phone=${encodeURIComponent(phoneNumber)}`)
+      const data = await response.json()
+      if (response.ok) {
+        setElections(data.elections || [])
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function closeElection(electionId: string) {
+    const confirm = window.confirm(
+      'Are you sure you want to close this election? This action cannot be undone and voting will be disabled.'
+    )
+    
+    if (!confirm) return
+
+    setClosingId(electionId)
+
+    try {
+      const response = await fetch('/api/closeElection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: electionId })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert('Election closed successfully!')
+        // Refresh elections list
+        if (user) {
+          loadElections(user.phoneNumber)
+        }
+      } else {
+        alert('Failed to close election: ' + (data.error || 'Unknown error'))
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to close election. Please try again.')
+    } finally {
+      setClosingId(null)
+    }
+  }
+
+  async function downloadResults(electionId: string, title: string) {
+    try {
+      const response = await fetch(`/api/getElectionResults?id=${electionId}`)
+      const data = await response.json()
+
+      if (response.ok && data.results) {
+        downloadResultsAsXLSX(`${title.replace(/[^a-z0-9]/gi, '_')}_results.xlsx`, data.results)
+        alert('Results downloaded successfully!')
+      } else {
+        alert('Failed to download results: ' + (data.error || 'No results available'))
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to download results. Please try again.')
+    }
+  }
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="text-center py-12">Loading your elections...</div>
+      </Layout>
+    )
+  }
+
+  return (
+    <Layout>
+      <div className="mb-6">
+        <button onClick={() => router.push('/')} className="text-sm text-slate-600 hover:text-slate-800 mb-4">
+          ← Back to Home
+        </button>
+        <h1 className="text-2xl font-semibold">My Elections</h1>
+        <p className="text-sm text-gray-600 mt-1">Manage your hosted elections</p>
+      </div>
+
+      {elections.length === 0 ? (
+        <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+          <div className="text-4xl mb-3">📊</div>
+          <p className="text-gray-600 mb-4">You haven't created any elections yet</p>
+          <button
+            onClick={() => router.push('/host')}
+            className="px-4 py-2 bg-slate-800 text-white rounded hover:bg-slate-700"
+          >
+            Create Your First Election
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {elections.map((election) => (
+            <div key={election.id} className="border border-gray-300 rounded-lg p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{election.title}</h3>
+                  <p className="text-sm text-gray-600">
+                    Created: {new Date(election.created_at).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Votes: {election.voteCount}
+                  </p>
+                </div>
+                <div>
+                  {election.closed ? (
+                    <span className="px-3 py-1 bg-red-100 text-red-800 text-sm rounded-full">
+                      Closed
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                      Active
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => {
+                    const link = `${process.env.NEXT_PUBLIC_APP_BASE_URL}/election/${election.id}`
+                    navigator.clipboard.writeText(link)
+                    alert('Link copied to clipboard!')
+                  }}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Copy Link
+                </button>
+
+                {!election.closed && (
+                  <button
+                    onClick={() => closeElection(election.id)}
+                    disabled={closingId === election.id}
+                    className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {closingId === election.id ? 'Closing...' : 'Close Election'}
+                  </button>
+                )}
+
+                {election.closed && (
+                  <button
+                    onClick={() => downloadResults(election.id, election.title)}
+                    className="px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    📥 Download Results
+                  </button>
+                )}
+
+                <button
+                  onClick={() => router.push(`/election/${election.id}`)}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  View
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Layout>
+  )
+}
