@@ -2,27 +2,49 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Layout from '../components/Layout'
-import { auth } from '../lib/firebase'
+import type { User } from 'firebase/auth'
 
-export default function Home(){
+export default function Home() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser)
-      setLoading(false)
-    })
-    return () => unsubscribe()
+    setMounted(true)
   }, [])
 
-  async function handleLogout(){
+  useEffect(() => {
+    if (!mounted) return
+
+    // Dynamic import to avoid SSR issues
+    let unsubscribe: (() => void) | undefined
+
+    import('../lib/firebase')
+      .then(({ auth }) => {
+        unsubscribe = auth.onAuthStateChanged((currentUser) => {
+          setUser(currentUser)
+          setLoading(false)
+        })
+      })
+      .catch(err => {
+        console.error('Firebase init error:', err)
+        setLoading(false)
+      })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [mounted])
+
+  async function handleLogout() {
     try {
+      const { auth } = await import('../lib/firebase')
       await auth.signOut()
       router.push('/login')
     } catch (err) {
       console.error(err)
+      router.push('/login')
     }
   }
 
@@ -62,7 +84,7 @@ export default function Home(){
             href="/login" 
             className="px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors inline-block"
           >
-            Login with Phone Number
+            Login with Email
           </Link>
         </div>
       </Layout>
@@ -73,7 +95,7 @@ export default function Home(){
     <Layout>
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-slate-800 mb-2">NOTA</h1>
-        <p className="text-sm text-gray-600 mb-4">Welcome, {user.phoneNumber}</p>
+        <p className="text-sm text-gray-600 mb-4">Welcome, {user.email}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

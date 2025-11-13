@@ -1,9 +1,7 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import Layout from '../../components/Layout'
-import FormField from '../../components/FormField'
-import { auth } from '../../lib/firebase'
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
+import type { User } from 'firebase/auth'
 
 type Position = { name: string; candidates: string[] }
 
@@ -11,10 +9,7 @@ export default function ElectionPage(){
   const router = useRouter()
   const { id } = router.query
   const [election, setElection] = useState<{ title: string; positions: Position[]; closed: boolean } | null>(null)
-  const [user, setUser] = useState<any>(null)
-  const [otpPhone, setOtpPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [confirmationResult, setConfirmationResult] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [selected, setSelected] = useState<Record<number, number>>({})
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -40,76 +35,20 @@ export default function ElectionPage(){
         setLoading(false)
       })
 
-    // Check if user is already logged in
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser)
-      if (currentUser) {
-        setOtpPhone(currentUser.phoneNumber || '')
-      }
+    // Check if user is logged in
+    import('../../lib/firebase').then(({ auth }) => {
+      const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+        setUser(currentUser)
+      })
+      return () => unsubscribe()
     })
-    
-    return () => unsubscribe()
   },[id])
 
-  function setupRecaptcha(){
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 
-        size: 'invisible' 
-      })
-    }
-  }
-
-  async function sendOtp(){
-    if (!otpPhone || otpPhone.length < 10) {
-      setError('Please enter a valid phone number')
-      return
-    }
-
-    setError('')
-    setLoading(true)
-    
-    try {
-      setupRecaptcha()
-      const appVerifier = (window as any).recaptchaVerifier
-      const confirmation = await signInWithPhoneNumber(auth, otpPhone, appVerifier)
-      setConfirmationResult(confirmation)
-      alert('OTP sent to your phone!')
-    } catch (err: any) {
-      console.error(err)
-      setError(err.message || 'Failed to send OTP')
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.clear()
-        ;(window as any).recaptchaVerifier = null
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function verifyOtp(){
-    if (!otp || otp.length !== 6) {
-      setError('Please enter a valid 6-digit OTP')
-      return
-    }
-
-    setLoading(true)
-    setError('')
-
-    try {
-      const result = await confirmationResult.confirm(otp)
-      setUser(result.user)
-      setConfirmationResult(null)
-      setOtp('')
-    } catch (err: any) {
-      console.error(err)
-      setError('Invalid OTP. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   async function submitVote(){
-    if (!id || !user) return
+    if (!id || !user || !user.email) {
+      setError('Please login to submit your vote')
+      return
+    }
 
     // Check if all positions have been voted for
     const unvotedPositions = election?.positions.filter((_, i) => selected[i] === undefined)
@@ -130,7 +69,7 @@ export default function ElectionPage(){
         body: JSON.stringify({ 
           id, 
           votes: selected,
-          phoneNumber: user.phoneNumber 
+          email: user.email
         }) 
       })
       
@@ -190,89 +129,28 @@ export default function ElectionPage(){
 
   return (
     <Layout>
-      <div id="recaptcha-container"></div>
-      
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-2">{election.title}</h2>
         <p className="text-sm text-gray-600">Cast your vote securely</p>
       </div>
 
       {!user ? (
-        <>
-          {!confirmationResult ? (
-            <>
-              <FormField label="Phone Number (with country code, e.g., +919876543210)">
-                <input 
-                  type="tel"
-                  value={otpPhone} 
-                  onChange={e=>setOtpPhone(e.target.value)} 
-                  className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-slate-800"
-                  placeholder="+919876543210"
-                  disabled={loading}
-                />
-              </FormField>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                  {error}
-                </div>
-              )}
-
-              <button 
-                onClick={sendOtp} 
-                disabled={loading}
-                className="w-full px-4 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Sending...' : 'Send OTP'}
-              </button>
-            </>
-          ) : (
-            <>
-              <FormField label="Enter 6-digit OTP">
-                <input 
-                  type="text"
-                  maxLength={6}
-                  value={otp} 
-                  onChange={e=>setOtp(e.target.value.replace(/\D/g, ''))} 
-                  className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-slate-800 text-center text-2xl tracking-widest"
-                  placeholder="000000"
-                  disabled={loading}
-                  autoFocus
-                />
-              </FormField>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                  {error}
-                </div>
-              )}
-
-              <button 
-                onClick={verifyOtp} 
-                disabled={loading}
-                className="w-full px-4 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mb-3"
-              >
-                {loading ? 'Verifying...' : 'Verify OTP'}
-              </button>
-
-              <button 
-                onClick={() => {
-                  setConfirmationResult(null)
-                  setOtp('')
-                  setError('')
-                }} 
-                className="w-full px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors text-sm"
-              >
-                Change Phone Number
-              </button>
-            </>
-          )}
-        </>
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">🔒</div>
+          <h3 className="text-xl font-semibold mb-2">Login Required</h3>
+          <p className="text-gray-600 mb-6">You need to be logged in to vote in this election.</p>
+          <button 
+            onClick={() => router.push('/login')} 
+            className="px-6 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
       ) : (
         <div>
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
             <div className="text-sm text-green-800">
-              ✓ Authenticated as: <span className="font-medium">{user.phoneNumber}</span>
+              ✓ Authenticated as: <span className="font-medium">{user.email}</span>
             </div>
           </div>
 

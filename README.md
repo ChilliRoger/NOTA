@@ -1,20 +1,20 @@
-# NOTA — Next.js + Firebase + Neon (Starter)
+# NOTA — Next.js + Firebase + Neon
 
-This repository is a minimal, working **Next.js (Pages Router)** starter configured with:
-- Firebase Phone Authentication (OTP)
-- Neon (Postgres) connectivity via `pg` (server-side API routes)
-- Basic pages: Home, Host (create election), Vote (paste link), Election detail (voting)
-- Host-only close & download results (Excel via SheetJS)
-- Minimal, Google-Forms-like UI using Tailwind CSS
+This repository is a **Next.js (Pages Router)** voting application configured with:
+- **Firebase Email/Password Authentication**
+- **Neon PostgreSQL** for serverless database connectivity
+- Election hosting and voting system
+- Excel export for results
+- Clean, minimal UI using Tailwind CSS
 
 ---
 
 ## Features
 
-✅ **Firebase Phone Authentication**: Secure OTP-based login using Firebase Auth  
+✅ **Firebase Email/Password Authentication**: Secure login system using Firebase Auth  
 ✅ **Neon PostgreSQL Database**: Serverless Postgres for storing elections and votes  
 ✅ **Private Election Links**: Share unique URLs with voters  
-✅ **Real-time Voting**: Submit votes with phone verification  
+✅ **Duplicate Vote Prevention**: Email-based hashing prevents multiple votes  
 ✅ **Excel Export**: Download voting results as Excel files  
 ✅ **Responsive UI**: Clean, minimal interface built with Tailwind CSS  
 
@@ -26,7 +26,7 @@ Before you begin, ensure you have:
 
 1. **Node.js** (v18 or higher)
 2. **npm** or **yarn**
-3. **Firebase Project** with Phone Authentication enabled
+3. **Firebase Project** with Email/Password Authentication enabled
 4. **Neon Database** account and connection string
 
 ---
@@ -58,10 +58,10 @@ This will install all required packages:
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Create a new project or use an existing one
-3. Enable **Phone Authentication**:
+3. Enable **Email/Password Authentication**:
    - Go to **Authentication** → **Sign-in method**
-   - Enable **Phone** provider
-   - Add your domain to authorized domains (for local: `localhost`)
+   - Enable **Email/Password** provider
+   - Save changes
 4. Get your Firebase config:
    - Go to **Project Settings** → **General**
    - Scroll to "Your apps" and copy the config values
@@ -71,7 +71,7 @@ This will install all required packages:
 1. Go to [Neon Console](https://console.neon.tech/)
 2. Create a new project
 3. Copy the **Connection String** (DATABASE_URL)
-4. Run the schema (see Database Setup section below)
+4. Make sure to include `?sslmode=require` at the end
 
 ### 5. Configure Environment Variables
 
@@ -86,35 +86,43 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 
 # Neon Database Configuration
-DATABASE_URL=postgresql://user:password@host:5432/database
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 
 # Application Base URL
 NEXT_PUBLIC_APP_BASE_URL=http://localhost:3000
 ```
 
+⚠️ **IMPORTANT**: Never commit `.env.local` to GitHub! It's already in `.gitignore`.
+
 ### 6. Set Up Database Schema
 
-Run the SQL commands from `schema.sql` in your Neon database:
+Run the SQL commands from `schema.sql` in your Neon database console:
 
 ```sql
 CREATE TABLE elections (
   id text PRIMARY KEY,
   title text,
   data jsonb,
-  closed boolean default false
+  closed boolean default false,
+  created_by text,
+  created_at timestamptz default now()
 );
 
 CREATE TABLE votes (
   id serial PRIMARY KEY,
   election_id text REFERENCES elections(id),
+  email_hash text,
   vote_json jsonb,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  UNIQUE(election_id, email_hash)
 );
 
 CREATE INDEX idx_votes_election_id ON votes(election_id);
+CREATE INDEX idx_elections_created_by ON elections(created_by);
+CREATE INDEX idx_votes_email_hash ON votes(election_id, email_hash);
 ```
 
-You can run this in the Neon SQL Editor.
+You can run this in the Neon SQL Editor, or the database will be automatically set up on first use.
 
 ### 7. Run the Development Server
 
@@ -133,28 +141,27 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ├─ pages/
 │  ├─ _app.tsx              # App wrapper with global styles
 │  ├─ index.tsx             # Home page (landing)
+│  ├─ login.tsx             # Email/Password login/signup page
 │  ├─ host.tsx              # Create election page
 │  ├─ vote.tsx              # Paste election link page
+│  ├─ my-elections.tsx      # View hosted elections
 │  ├─ election/[id].tsx     # Voting page for specific election
 │  └─ api/
 │     ├─ createElection.ts  # API: Create new election
-│     ├─ submitVote.ts      # API: Submit vote
-│     ├─ closeElection.ts   # API: Close election & get results
-│     └─ getResults.ts      # API: Fetch election details
+│     ├─ submitVote.ts      # API: Submit vote (with email hash)
+│     ├─ getElection.ts     # API: Get election details
+│     └─ downloadResults.ts # API: Download results as Excel
 ├─ lib/
 │  ├─ firebase.ts           # Firebase client configuration
-│  └─ db.ts                 # Neon Postgres connection
+│  └─ db.ts                 # Neon Postgres connection pool
 ├─ components/
 │  ├─ Layout.tsx            # Page layout wrapper
 │  └─ FormField.tsx         # Form field component
-├─ utils/
-│  └─ excel.ts              # Excel export utility
 ├─ styles/
 │  └─ globals.css           # Global styles with Tailwind
-├─ tailwind.config.js       # Tailwind configuration
-├─ postcss.config.js        # PostCSS configuration
-├─ schema.sql               # Database schema
+├─ schema.sql               # Database schema (email_hash based)
 ├─ .env.local               # Environment variables (gitignored)
+├─ .gitignore               # Git ignore file (protects secrets)
 └─ package.json
 ```
 
@@ -164,29 +171,43 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### For Election Hosts
 
-1. **Create an Election**:
+1. **Sign Up / Login**:
+   - Go to `/login`
+   - Create an account with email and password (min 6 characters)
+   - Or login if you already have an account
+
+2. **Create an Election**:
    - Click "Host an election"
    - Enter election title
    - Add positions and candidates
-   - Click "Create" to generate a private link
+   - Click "Create Election" to generate a shareable link
 
-2. **Share the Link**:
+3. **Share the Link**:
    - Copy the generated election link
    - Share it with voters via WhatsApp, email, etc.
+   - Voters must be logged in to vote
 
-3. **Close Election & Download Results**:
-   - Use the `closeElection` API to close voting
-   - Download results as Excel file using the `downloadResultsAsXLSX` utility
+4. **View Results**:
+   - Go to "My Elections"
+   - Click on your election
+   - View vote counts
+   - Download results as Excel
 
 ### For Voters
 
-1. **Vote in an Election**:
-   - Click "Vote in election" or open the election link directly
-   - Enter your phone number (E.164 format, e.g., +919876543210)
-   - Click "Send OTP"
-   - Enter the OTP received
-   - Select your candidates
-   - Click "Submit vote"
+1. **Login**:
+   - Open the election link shared by the host
+   - If not logged in, click "Go to Login"
+   - Sign up or login with your email
+
+2. **Vote**:
+   - Select your candidates for each position
+   - Click "Submit Vote"
+   - Vote is submitted anonymously (only email hash is stored)
+
+3. **Duplicate Prevention**:
+   - Each email can only vote once per election
+   - If you try voting again, you'll see an error message
 
 ---
 
@@ -305,64 +326,85 @@ git push -u origin main
 
 ## Security Notes & Production Considerations
 
-⚠️ **Important**: This starter is minimal and requires additional security measures for production:
+⚠️ **Important**: This application requires additional security measures for production:
 
-1. **Phone Number Verification**:
-   - Currently, votes are stored without tying to phone numbers
-   - For production, store phone number (or hash) in votes table to prevent duplicate voting
-   - Use Firebase ID tokens server-side: verify with `admin.auth().verifyIdToken()`
+1. **Email-Based Duplicate Prevention**:
+   - Votes are stored with SHA-256 hashed emails
+   - Each email can only vote once per election (enforced by database UNIQUE constraint)
+   - Emails are never stored in plain text for voter privacy
 
-2. **reCAPTCHA Configuration**:
-   - Firebase Phone Auth requires reCAPTCHA
-   - Configure reCAPTCHA v3 in Firebase Console for better UX
-   - Test thoroughly in production environment
+2. **Environment Variables**:
+   - Never commit `.env.local` to version control
+   - All sensitive credentials (Firebase, Neon) must be kept secret
+   - Use Vercel environment variables for production deployment
 
-3. **Rate Limiting**:
+3. **Firebase Authentication**:
+   - Email/Password auth is free (no billing required)
+   - For production, consider enabling email verification
+   - Add password reset functionality for better UX
+
+4. **Rate Limiting**:
    - Add rate limiting to API routes to prevent abuse
-   - Consider using Vercel Edge Config or Redis
+   - Consider using Vercel Edge Config or upstash/redis for tracking
 
-4. **Input Validation**:
+5. **Input Validation**:
    - Add proper input validation and sanitization
    - Use libraries like `zod` or `joi` for schema validation
-
-5. **CORS & Security Headers**:
-   - Configure proper CORS policies
-   - Add security headers in `next.config.ts`
+   - Sanitize user inputs before storing in database
 
 6. **Database Security**:
-   - Neon connection string should be kept secret
-   - Use environment variables, never commit credentials
-   - Enable SSL mode for database connections in production
+   - Neon connection string must be kept secret
+   - SSL mode is required for secure connections
+   - Consider using connection pooling limits in production
+
+7. **CORS & Security Headers**:
+   - Configure proper CORS policies in production
+   - Add security headers in `next.config.ts`:
+     - Content-Security-Policy
+     - X-Frame-Options
+     - X-Content-Type-Options
 
 ---
 
 ## Troubleshooting
 
-### Firebase reCAPTCHA Issues
-- Ensure your domain is in Firebase authorized domains
-- Check browser console for reCAPTCHA errors
-- For local development, use `localhost` (not `127.0.0.1`)
+### Firebase Authentication Issues
+
+- Make sure Email/Password is enabled in Firebase Console
+- Check browser console for authentication errors
+- Verify `.env.local` has correct Firebase credentials
 
 ### Database Connection Errors
-- Verify `DATABASE_URL` is correct
-- Check Neon project is active and not sleeping
-- Ensure database schema is created
+
+- Verify `DATABASE_URL` is correct and includes `?sslmode=require`
+- Check Neon project is active (not in sleep mode)
+- Ensure database schema is created (run `schema.sql`)
+- Check connection limits in Neon dashboard
 
 ### Tailwind Styles Not Working
-- Make sure `postcss.config.js` and `tailwind.config.js` exist
+
+- Make sure `postcss.config.mjs` and `tailwind.config.ts` exist
 - Restart dev server after config changes
 - Check `globals.css` imports Tailwind directives
+- Clear `.next` cache: `rm -rf .next` and restart
+
+### "Database error" when voting
+
+- Ensure database tables are created with `email_hash` column (not `phone_hash`)
+- Verify user is logged in before voting
+- Check browser console and terminal for error details
 
 ---
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (Pages Router)
-- **Language**: TypeScript
-- **Authentication**: Firebase Auth (Phone OTP)
-- **Database**: Neon (Serverless Postgres)
-- **Styling**: Tailwind CSS
+- **Framework**: Next.js 16.0.3 (Pages Router)
+- **Language**: TypeScript 5
+- **Authentication**: Firebase Auth (Email/Password)
+- **Database**: Neon (Serverless PostgreSQL)
+- **Styling**: Tailwind CSS v3.4.17
 - **Export**: SheetJS (xlsx)
+- **Build Tool**: Turbopack
 
 ---
 

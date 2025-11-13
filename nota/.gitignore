@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files - IMPORTANT: Contains Firebase & Database credentials
 .env*
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # vercel
 .vercel
@@ -39,3 +44,35 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Database setup scripts (may contain sensitive info)
+setup-db.js
+setup-db-email.js
+test-db.js
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Private keys and certificates
+*.key
+*.cert
+*.p12
+
+# Logs
+logs
+*.log
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+
+# Testing markdown
+TESTING.md

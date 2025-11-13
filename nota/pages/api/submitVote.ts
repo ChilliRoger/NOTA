@@ -4,20 +4,20 @@ import crypto from 'crypto'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse){
   if (req.method !== 'POST') return res.status(405).end()
-  const { id, votes, phoneNumber } = req.body
+  const { id, votes, email } = req.body
   
-  if (!phoneNumber) {
-    return res.status(400).json({ error: 'Phone number required' })
+  if (!email) {
+    return res.status(400).json({ error: 'Email required' })
   }
 
-  // Hash the phone number for privacy
-  const phoneHash = crypto.createHash('sha256').update(phoneNumber).digest('hex')
+  // Hash the email for privacy
+  const emailHash = crypto.createHash('sha256').update(email.toLowerCase().trim()).digest('hex')
 
   try{
-    // Check if this phone number has already voted in this election
+    // Check if this email has already voted in this election
     const existingVote = await pool.query(
-      `SELECT id FROM votes WHERE election_id = $1 AND phone_hash = $2`,
-      [id, phoneHash]
+      `SELECT id FROM votes WHERE election_id = $1 AND email_hash = $2`,
+      [id, emailHash]
     )
 
     if (existingVote.rowCount && existingVote.rowCount > 0) {
@@ -40,8 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Store the vote
     await pool.query(
-      `INSERT INTO votes(election_id, phone_hash, vote_json) VALUES($1,$2,$3)`,
-      [id, phoneHash, JSON.stringify(votes)]
+      `INSERT INTO votes(election_id, email_hash, vote_json) VALUES($1,$2,$3)`,
+      [id, emailHash, JSON.stringify(votes)]
     )
     
     res.json({ ok: true })

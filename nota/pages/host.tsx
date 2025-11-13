@@ -4,10 +4,11 @@ import Layout from '../components/Layout'
 import FormField from '../components/FormField'
 import { v4 as uuidv4 } from 'uuid'
 import { auth } from '../lib/firebase'
+import type { User } from 'firebase/auth'
 
 export default function Host(){
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [title, setTitle] = useState('')
   const [positions, setPositions] = useState([{ name: '', candidates: [''] }])
@@ -69,7 +70,7 @@ export default function Host(){
             ...p,
             candidates: p.candidates.filter(c => c.trim()) // Remove empty candidates
           })),
-          createdBy: user?.phoneNumber 
+          createdBy: user?.email 
         })
       })
 

@@ -2,10 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import pool from '../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse){
-  const { phone } = req.query
+  const { email } = req.query
   
-  if (!phone) {
-    return res.status(400).json({ error: 'Phone number required' })
+  if (!email) {
+    return res.status(400).json({ error: 'Email required' })
   }
 
   try {
@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       WHERE e.created_by = $1
       GROUP BY e.id, e.title, e.closed, e.created_at
       ORDER BY e.created_at DESC`,
-      [phone]
+      [email]
     )
 
     const elections = result.rows.map(row => ({

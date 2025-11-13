@@ -2,41 +2,42 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '../components/Layout'
 import FormField from '../components/FormField'
-import { auth } from '../lib/firebase'
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 
 export default function Login(){
   const router = useRouter()
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [confirmationResult, setConfirmationResult] = useState<any>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // Check if user is already logged in
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        router.push('/')
-      }
-    })
-    return () => unsubscribe()
-  }, [router])
+    setMounted(true)
+  }, [])
 
-  function setupRecaptcha(){
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => {
-          // reCAPTCHA solved
+  useEffect(() => {
+    if (!mounted) return
+
+    import('../lib/firebase').then(({ auth }) => {
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user) {
+          router.push('/')
         }
       })
-    }
-  }
+      return () => unsubscribe()
+    })
+  }, [router, mounted])
 
-  async function sendOtp(){
-    if (!phone || phone.length < 10) {
-      setError('Please enter a valid phone number')
+  async function handleAuth(){
+    if (!email || !password) {
+      setError('Please enter email and password')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters')
       return
     }
 
@@ -44,41 +45,34 @@ export default function Login(){
     setError('')
     
     try {
-      setupRecaptcha()
-      const appVerifier = (window as any).recaptchaVerifier
-      const confirmation = await signInWithPhoneNumber(auth, phone, appVerifier)
-      setConfirmationResult(confirmation)
-      setError('')
-      alert('OTP sent to your phone!')
-    } catch (err: any) {
-      console.error(err)
-      setError(err.message || 'Failed to send OTP. Please try again.')
-      // Reset reCAPTCHA on error
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.clear()
-        ;(window as any).recaptchaVerifier = null
+      const { auth } = await import('../lib/firebase')
+      
+      if (isSignUp) {
+        // Sign up new user
+        await createUserWithEmailAndPassword(auth, email, password)
+        alert('Account created successfully!')
+      } else {
+        // Sign in existing user
+        await signInWithEmailAndPassword(auth, email, password)
       }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function verifyOtp(){
-    if (!otp || otp.length !== 6) {
-      setError('Please enter a valid 6-digit OTP')
-      return
-    }
-
-    setLoading(true)
-    setError('')
-
-    try {
-      await confirmationResult.confirm(otp)
-      // User is now signed in, redirect to home
+      
       router.push('/')
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
-      setError('Invalid OTP. Please try again.')
+      const errorMessage = err instanceof Error ? err.message : 'Authentication failed'
+      
+      // User-friendly error messages
+      if (errorMessage.includes('email-already-in-use')) {
+        setError('Email already in use. Try logging in instead.')
+      } else if (errorMessage.includes('user-not-found')) {
+        setError('No account found. Try signing up instead.')
+      } else if (errorMessage.includes('wrong-password')) {
+        setError('Incorrect password. Please try again.')
+      } else if (errorMessage.includes('invalid-email')) {
+        setError('Invalid email address.')
+      } else {
+        setError(errorMessage)
+      }
     } finally {
       setLoading(false)
     }
@@ -86,83 +80,61 @@ export default function Login(){
 
   return (
     <Layout>
-      <div id="recaptcha-container"></div>
-      
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-slate-800 mb-2">NOTA</h1>
-        <p className="text-sm text-gray-600">Login to host or vote in elections</p>
+        <p className="text-sm text-gray-600">
+          {isSignUp ? 'Create an account' : 'Login to host or vote in elections'}
+        </p>
       </div>
 
-      {!confirmationResult ? (
-        <>
-          <FormField label="Phone Number (with country code, e.g., +919876543210)">
-            <input 
-              type="tel"
-              value={phone} 
-              onChange={e=>setPhone(e.target.value)} 
-              className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-slate-800"
-              placeholder="+919876543210"
-              disabled={loading}
-            />
-          </FormField>
+      <FormField label="Email">
+        <input 
+          type="email"
+          value={email} 
+          onChange={e=>setEmail(e.target.value)} 
+          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-slate-800"
+          placeholder="your@email.com"
+          disabled={loading}
+        />
+      </FormField>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-              {error}
-            </div>
-          )}
+      <FormField label="Password">
+        <input 
+          type="password"
+          value={password} 
+          onChange={e=>setPassword(e.target.value)} 
+          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-slate-800"
+          placeholder="••••••••"
+          disabled={loading}
+        />
+      </FormField>
 
-          <button 
-            onClick={sendOtp} 
-            disabled={loading}
-            className="w-full px-4 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Sending...' : 'Send OTP'}
-          </button>
-        </>
-      ) : (
-        <>
-          <FormField label="Enter 6-digit OTP">
-            <input 
-              type="text"
-              maxLength={6}
-              value={otp} 
-              onChange={e=>setOtp(e.target.value.replace(/\D/g, ''))} 
-              className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-slate-800 text-center text-2xl tracking-widest"
-              placeholder="000000"
-              disabled={loading}
-            />
-          </FormField>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <button 
-            onClick={verifyOtp} 
-            disabled={loading}
-            className="w-full px-4 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mb-3"
-          >
-            {loading ? 'Verifying...' : 'Verify OTP'}
-          </button>
-
-          <button 
-            onClick={() => {
-              setConfirmationResult(null)
-              setOtp('')
-              setError('')
-            }} 
-            className="w-full px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors text-sm"
-          >
-            Change Phone Number
-          </button>
-        </>
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+          {error}
+        </div>
       )}
 
+      <button 
+        onClick={handleAuth} 
+        disabled={loading}
+        className="w-full px-4 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mb-3"
+      >
+        {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Login')}
+      </button>
+
+      <button 
+        onClick={() => setIsSignUp(!isSignUp)} 
+        className="w-full px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors text-sm"
+      >
+        {isSignUp ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
+      </button>
+
       <div className="mt-6 text-center text-xs text-gray-500">
-        <p>By logging in, you agree to our Terms of Service</p>
+        <p>By continuing, you agree to our Terms of Service</p>
+        <p className="mt-2 text-yellow-600">
+          📧 Using email/password auth (no billing required)
+        </p>
       </div>
     </Layout>
   )

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Layout from '../components/Layout'
 import { auth } from '../lib/firebase'
 import { downloadResultsAsXLSX } from '../utils/excel'
+import type { User } from 'firebase/auth'
 
 type Election = {
   id: string
@@ -14,7 +15,7 @@ type Election = {
 
 export default function MyElections(){
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [elections, setElections] = useState<Election[]>([])
   const [loading, setLoading] = useState(true)
   const [closingId, setClosingId] = useState<string | null>(null)
@@ -25,15 +26,17 @@ export default function MyElections(){
         router.push('/login')
       } else {
         setUser(currentUser)
-        loadElections(currentUser.phoneNumber)
+        if (currentUser.email) {
+          loadElections(currentUser.email)
+        }
       }
     })
     return () => unsubscribe()
   }, [router])
 
-  async function loadElections(phoneNumber: string) {
+  async function loadElections(email: string) {
     try {
-      const response = await fetch(`/api/getMyElections?phone=${encodeURIComponent(phoneNumber)}`)
+      const response = await fetch(`/api/getMyElections?email=${encodeURIComponent(email)}`)
       const data = await response.json()
       if (response.ok) {
         setElections(data.elections || [])
@@ -66,8 +69,8 @@ export default function MyElections(){
       if (response.ok) {
         alert('Election closed successfully!')
         // Refresh elections list
-        if (user) {
-          loadElections(user.phoneNumber)
+        if (user?.email) {
+          loadElections(user.email)
         }
       } else {
         alert('Failed to close election: ' + (data.error || 'Unknown error'))
@@ -118,7 +121,7 @@ export default function MyElections(){
       {elections.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
           <div className="text-4xl mb-3">📊</div>
-          <p className="text-gray-600 mb-4">You haven't created any elections yet</p>
+          <p className="text-gray-600 mb-4">You haven&apos;t created any elections yet</p>
           <button
             onClick={() => router.push('/host')}
             className="px-4 py-2 bg-slate-800 text-white rounded hover:bg-slate-700"

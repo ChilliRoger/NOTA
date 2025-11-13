@@ -43,10 +43,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Count votes
     votesResult.rows.forEach(row => {
-      const votes = row.vote_json as Record<number, number>
+      const votes = row.vote_json as Record<string, number>
       Object.entries(votes).forEach(([posIdx, candidateIdx]) => {
         const pi = parseInt(posIdx)
-        const ci = parseInt(candidateIdx)
+        const ci = candidateIdx
         if (!voteCounts[pi][ci]) {
           voteCounts[pi][ci] = 0
         }
