@@ -404,19 +404,3 @@ git push -u origin main
 - **Build Tool**: Turbopack
 
 ---
-
-## License
-
-MIT
-
----
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
----
-
-## Support
-
-For issues or questions, please open a GitHub issue or contact the maintainer.
