@@ -202,7 +202,7 @@ export default function ResultsPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="mt-8 flex gap-3">
+      <div className="mt-8 flex flex-col sm:flex-row gap-3">
         <button
           onClick={() => router.push(`/election/${id}`)}
           className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"

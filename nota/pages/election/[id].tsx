@@ -208,7 +208,7 @@ export default function ElectionPage(){
                       <li>Wait 2-3 minutes for delivery</li>
                     </ul>
                   </div>
-                  <div className="flex gap-3 flex-wrap">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={resendVerificationEmail}
                       disabled={resendingEmail}

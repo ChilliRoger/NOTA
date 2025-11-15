@@ -156,8 +156,8 @@ export default function MyElections(){
                 </div>
               </div>
 
-              <div className="flex gap-2 flex-wrap">
-                <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex-1 min-w-0 w-full sm:w-auto">
                   <input 
                     type="text" 
                     value={`${(process.env.NEXT_PUBLIC_APP_BASE_URL || '').trim()}/election/${election.id}`}

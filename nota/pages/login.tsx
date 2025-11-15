@@ -140,8 +140,8 @@ export default function Login(){
       </button>
 
       <button 
-        onClick={() => setIsSignUp(!isSignUp)} 
-        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+        onClick={() => setIsSignUp(!isSignUp)}
+        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium touch-manipulation"
       >
         {isSignUp ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
       </button>

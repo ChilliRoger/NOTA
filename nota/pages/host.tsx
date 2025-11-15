@@ -212,7 +212,7 @@ export default function Host(){
             className="w-full p-3 bg-white border rounded text-sm font-mono"
             onClick={(e) => e.currentTarget.select()}
           />
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <button
               onClick={() => {
                 navigator.clipboard.writeText(link).then(() => {
