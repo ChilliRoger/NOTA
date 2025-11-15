@@ -204,7 +204,7 @@ export default function Host(){
         <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="font-medium text-green-800 mb-2">✓ Election Created Successfully!</div>
           <div className="text-sm text-gray-700 mb-2">Share this link with voters:</div>
-          <div className="p-3 bg-white border rounded break-all text-sm font-mono">
+          <div className="p-3 bg-white border rounded text-sm font-mono overflow-x-auto whitespace-nowrap">
             {link}
           </div>
           <div className="mt-3 flex gap-2">
