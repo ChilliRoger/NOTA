@@ -1,6 +1,9 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# NOTA - Secure Voting Platform
+# Git Ignore Configuration
 
-# dependencies
+# ============================================
+# DEPENDENCIES
+# ============================================
 /node_modules
 /.pnp
 .pnp.*
@@ -10,69 +13,146 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# ============================================
+# NEXT.JS BUILD OUTPUT
+# ============================================
 /.next/
 /out/
-
-# production
 /build
 
-# misc
-.DS_Store
-*.pem
+# ============================================
+# TESTING
+# ============================================
+/coverage
+*.test.tsx
+*.test.ts
+*.spec.tsx
+*.spec.ts
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files - IMPORTANT: Contains Firebase & Database credentials
-.env*
+# ============================================
+# ENVIRONMENT VARIABLES (CRITICAL - NEVER COMMIT)
+# ============================================
+# Contains Firebase credentials, database connection strings,
+# and other sensitive configuration data
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+!.env.example
 
-# vercel
+# ============================================
+# DEPLOYMENT
+# ============================================
 .vercel
+.netlify
 
-# typescript
+# ============================================
+# TYPESCRIPT
+# ============================================
 *.tsbuildinfo
 next-env.d.ts
 
-# Database setup scripts (may contain sensitive info)
+# ============================================
+# DATABASE MIGRATION SCRIPTS
+# ============================================
+# These files may contain sensitive database information
+# or credentials and should not be committed
 setup-db.js
 setup-db-email.js
 test-db.js
+migrate-*.js
+remove-*.js
+test-*.js
 
-# IDE
+# ============================================
+# DEVELOPMENT TOOLS & IDEs
+# ============================================
+# Visual Studio Code
 .vscode/
+*.code-workspace
+
+# JetBrains IDEs (WebStorm, IntelliJ, etc.)
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim
 *.swp
 *.swo
 *~
 
-# OS
-Thumbs.db
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
 
-# Private keys and certificates
+# ============================================
+# OPERATING SYSTEM FILES
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ============================================
+# LOGS
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================
+# SECURITY & CERTIFICATES
+# ============================================
+*.pem
 *.key
 *.cert
+*.crt
 *.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
 
-# Logs
-logs
-*.log
-
-# Backup files
+# ============================================
+# BACKUP & TEMPORARY FILES
+# ============================================
 *.bak
 *.backup
 *.tmp
+*.temp
+*.cache
+*.old
+*.orig
 
-# Testing markdown
+# ============================================
+# DOCUMENTATION (INTERNAL)
+# ============================================
 TESTING.md
+NOTES.md
+TODO.md
+DRAFT*.md
+
+# ============================================
+# MISC
+# ============================================
+.eslintcache
+.stylelintcache
+.prettierignore

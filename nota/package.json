@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
+    "vercel:pull": "vercel env pull",
+    "clean": "rimraf .next"
   },
   "dependencies": {
     "cookie": "^1.0.2",

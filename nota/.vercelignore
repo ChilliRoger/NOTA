@@ -1,0 +1,31 @@
+# Environment files
+.env.local
+.env
+
+# Development files
+node_modules
+.next
+
+# Documentation
+*.md
+!README.md
+
+# Database scripts
+*.js
+!next.config.js
+!postcss.config.js
+!tailwind.config.js
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+coverage

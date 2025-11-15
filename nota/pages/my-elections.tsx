@@ -111,10 +111,10 @@ export default function MyElections(){
   return (
     <Layout>
       <div className="mb-6">
-        <button onClick={() => router.push('/')} className="text-sm text-slate-600 hover:text-slate-800 mb-4">
-          ← Back to Home
+        <button onClick={() => router.push('/')} className="text-sm text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-1">
+          <span>←</span> <span>Back to Home</span>
         </button>
-        <h1 className="text-2xl font-semibold">My Elections</h1>
+        <h1 className="text-2xl font-bold text-blue-900">My Elections</h1>
         <p className="text-sm text-gray-600 mt-1">Manage your hosted elections</p>
       </div>
 
@@ -124,7 +124,7 @@ export default function MyElections(){
           <p className="text-gray-600 mb-4">You haven&apos;t created any elections yet</p>
           <button
             onClick={() => router.push('/host')}
-            className="px-4 py-2 bg-slate-800 text-white rounded hover:bg-slate-700"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             Create Your First Election
           </button>
@@ -132,7 +132,7 @@ export default function MyElections(){
       ) : (
         <div className="space-y-4">
           {elections.map((election) => (
-            <div key={election.id} className="border border-gray-300 rounded-lg p-4">
+            <div key={election.id} className="border-2 border-gray-300 rounded-lg p-5 hover:border-blue-400 transition-colors">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{election.title}</h3>
@@ -163,16 +163,23 @@ export default function MyElections(){
                     navigator.clipboard.writeText(link)
                     alert('Link copied to clipboard!')
                   }}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
                   Copy Link
+                </button>
+
+                <button
+                  onClick={() => router.push(`/results/${election.id}`)}
+                  className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  📊 View Results
                 </button>
 
                 {!election.closed && (
                   <button
                     onClick={() => closeElection(election.id)}
                     disabled={closingId === election.id}
-                    className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
                   >
                     {closingId === election.id ? 'Closing...' : 'Close Election'}
                   </button>
@@ -181,18 +188,11 @@ export default function MyElections(){
                 {election.closed && (
                   <button
                     onClick={() => downloadResults(election.id, election.title)}
-                    className="px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                    className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                   >
-                    📥 Download Results
+                    📥 Download Excel
                   </button>
                 )}
-
-                <button
-                  onClick={() => router.push(`/election/${election.id}`)}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  View
-                </button>
               </div>
             </div>
           ))}

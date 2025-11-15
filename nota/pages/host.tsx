@@ -100,18 +100,18 @@ export default function Host(){
   return (
     <Layout>
       <div className="mb-4">
-        <button onClick={() => router.push('/')} className="text-sm text-slate-600 hover:text-slate-800">
-          ← Back to Home
+        <button onClick={() => router.push('/')} className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
+          <span>←</span> <span>Back to Home</span>
         </button>
       </div>
 
-      <h2 className="text-2xl font-semibold mb-6 text-center">Host an Election</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center text-blue-900">Host an Election</h2>
       
       <FormField label="Election Title">
         <input 
           value={title} 
           onChange={e=>setTitle(e.target.value)} 
-          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-slate-800"
+          className="w-full border-2 border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="e.g., Student Council Election 2025"
         />
       </FormField>
@@ -120,7 +120,7 @@ export default function Host(){
         <h3 className="text-lg font-medium mb-3">Positions & Candidates</h3>
         
         {positions.map((pos, pi) => (
-          <div key={pi} className="mb-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+          <div key={pi} className="mb-4 p-4 border-2 border-gray-300 rounded-lg bg-blue-50">
             <FormField label={`Position ${pi+1} Name`}>
               <input 
                 value={pos.name} 
@@ -195,7 +195,7 @@ export default function Host(){
       <button 
         onClick={handleCreate} 
         disabled={creating}
-        className="w-full px-4 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+        className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-lg"
       >
         {creating ? 'Creating...' : 'Create Election'}
       </button>
@@ -213,13 +213,13 @@ export default function Host(){
                 navigator.clipboard.writeText(link)
                 alert('Link copied to clipboard!')
               }}
-              className="flex-1 px-4 py-2 bg-slate-800 text-white rounded hover:bg-slate-700"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
             >
               Copy Link
             </button>
             <button
               onClick={() => router.push('/my-elections')}
-              className="flex-1 px-4 py-2 border border-slate-800 rounded hover:bg-slate-50"
+              className="flex-1 px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 font-medium"
             >
               View My Elections
             </button>

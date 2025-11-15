@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '../components/Layout'
 import FormField from '../components/FormField'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
 
 export default function Login(){
   const router = useRouter()
@@ -49,14 +49,25 @@ export default function Login(){
       
       if (isSignUp) {
         // Sign up new user
-        await createUserWithEmailAndPassword(auth, email, password)
-        alert('Account created successfully!')
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+        
+        try {
+          // Send verification email
+          await sendEmailVerification(userCredential.user)
+          alert('✓ Account created!\n\nVerification email sent to: ' + email + '\n\nPlease check:\n• Your inbox\n• Spam/Junk folder\n• Promotions tab (Gmail)\n\nIf you don\'t see it, you can resend from the voting page.')
+        } catch (emailError) {
+          console.error('Email verification error:', emailError)
+          alert('⚠️ Account created, but verification email failed to send.\n\nYou can try resending from the voting page.\n\nError: ' + (emailError instanceof Error ? emailError.message : 'Unknown error'))
+        }
+        
+        setIsSignUp(false) // Switch to login mode
+        setEmail('')
+        setPassword('')
       } else {
         // Sign in existing user
         await signInWithEmailAndPassword(auth, email, password)
+        router.push('/')
       }
-      
-      router.push('/')
     } catch (err) {
       console.error(err)
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed'
@@ -80,8 +91,13 @@ export default function Login(){
 
   return (
     <Layout>
+      <div className="mb-4">
+        <button onClick={() => router.push('/')} className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
+          <span>←</span> <span>Back to Home</span>
+        </button>
+      </div>
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">NOTA</h1>
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">NOTA</h1>
         <p className="text-sm text-gray-600">
           {isSignUp ? 'Create an account' : 'Login to host or vote in elections'}
         </p>
@@ -118,14 +134,14 @@ export default function Login(){
       <button 
         onClick={handleAuth} 
         disabled={loading}
-        className="w-full px-4 py-3 bg-slate-800 text-white rounded hover:bg-slate-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mb-3"
+        className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mb-3 font-medium"
       >
         {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Login')}
       </button>
 
       <button 
         onClick={() => setIsSignUp(!isSignUp)} 
-        className="w-full px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors text-sm"
+        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
       >
         {isSignUp ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
       </button>
@@ -133,7 +149,7 @@ export default function Login(){
       <div className="mt-6 text-center text-xs text-gray-500">
         <p>By continuing, you agree to our Terms of Service</p>
         <p className="mt-2 text-yellow-600">
-          📧 Using email/password auth (no billing required)
+          📧 Using email/password auth.
         </p>
       </div>
     </Layout>

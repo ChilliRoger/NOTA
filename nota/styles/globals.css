@@ -3,4 +3,4 @@
 @tailwind utilities;
 
 html, body, #__next { height: 100%; }
-body { background: #f7fafc; }
+body { background: #f0f4f8; }
