@@ -156,3 +156,5 @@ DRAFT*.md
 .eslintcache
 .stylelintcache
 .prettierignore
+
+.vercel
