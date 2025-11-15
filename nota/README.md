@@ -1,5 +1,7 @@
 # NOTA - Secure Online Voting Platform
 
+A secure, anonymous voting platform enabling organizations to host democratic elections with triple-layer fraud prevention, real-time results, and automated Excel reporting.
+
 **NOTA** (None Of The Above) is a modern, production-ready online voting application that enables organizations, student councils, educational institutions, and community groups to conduct secure, transparent elections. Built with enterprise-grade security and privacy features, NOTA ensures fair democratic processes through multi-layer fraud prevention.
 
 ## Overview
