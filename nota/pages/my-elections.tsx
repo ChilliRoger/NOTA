@@ -160,12 +160,23 @@ export default function MyElections(){
                 <button
                   onClick={() => {
                     const link = `${process.env.NEXT_PUBLIC_APP_BASE_URL}/election/${election.id}`
-                    navigator.clipboard.writeText(link)
-                    alert('Link copied to clipboard!')
+                    const textArea = document.createElement('textarea')
+                    textArea.value = link
+                    textArea.style.position = 'fixed'
+                    textArea.style.left = '-999999px'
+                    document.body.appendChild(textArea)
+                    textArea.select()
+                    document.execCommand('copy')
+                    document.body.removeChild(textArea)
+                    const copied = document.createElement('div')
+                    copied.textContent = '✓ Copied!'
+                    copied.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50'
+                    document.body.appendChild(copied)
+                    setTimeout(() => copied.remove(), 2000)
                   }}
                   className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Copy Link
+                  📋 Copy Link
                 </button>
 
                 <button

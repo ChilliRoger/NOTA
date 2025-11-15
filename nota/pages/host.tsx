@@ -210,12 +210,23 @@ export default function Host(){
           <div className="mt-3 flex gap-2">
             <button
               onClick={() => {
-                navigator.clipboard.writeText(link)
-                alert('Link copied to clipboard!')
+                const textArea = document.createElement('textarea')
+                textArea.value = link
+                textArea.style.position = 'fixed'
+                textArea.style.left = '-999999px'
+                document.body.appendChild(textArea)
+                textArea.select()
+                document.execCommand('copy')
+                document.body.removeChild(textArea)
+                const copied = document.createElement('div')
+                copied.textContent = '✓ Copied!'
+                copied.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50'
+                document.body.appendChild(copied)
+                setTimeout(() => copied.remove(), 2000)
               }}
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
             >
-              Copy Link
+              📋 Copy Link
             </button>
             <button
               onClick={() => router.push('/my-elections')}
