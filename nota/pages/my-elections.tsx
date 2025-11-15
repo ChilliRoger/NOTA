@@ -160,7 +160,7 @@ export default function MyElections(){
                 <div className="flex-1 min-w-0">
                   <input 
                     type="text" 
-                    value={`${process.env.NEXT_PUBLIC_APP_BASE_URL}/election/${election.id}`}
+                    value={`${(process.env.NEXT_PUBLIC_APP_BASE_URL || '').trim()}/election/${election.id}`}
                     readOnly 
                     className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white font-mono"
                     onClick={(e) => e.currentTarget.select()}
@@ -168,7 +168,8 @@ export default function MyElections(){
                 </div>
                 <button
                   onClick={() => {
-                    const link = `${process.env.NEXT_PUBLIC_APP_BASE_URL}/election/${election.id}`
+                    const baseUrl = (process.env.NEXT_PUBLIC_APP_BASE_URL || '').trim()
+                    const link = `${baseUrl}/election/${election.id}`
                     navigator.clipboard.writeText(link).then(() => {
                       const copied = document.createElement('div')
                       copied.textContent = '✓ Copied!'

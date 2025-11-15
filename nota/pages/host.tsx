@@ -77,7 +77,8 @@ export default function Host(){
       const data = await response.json()
       
       if (response.ok) {
-        setLink(`${process.env.NEXT_PUBLIC_APP_BASE_URL}/election/${id}`)
+        const baseUrl = (process.env.NEXT_PUBLIC_APP_BASE_URL || '').trim()
+        setLink(`${baseUrl}/election/${id}`)
       } else {
         alert('Failed to create election: ' + (data.error || 'Unknown error'))
       }
