@@ -1,11 +1,8 @@
-# NOTA — Next.js + Firebase + Neon
+# NOTA
 
-This repository is a **Next.js (Pages Router)** voting application configured with:
-- **Firebase Email/Password Authentication**
-- **Neon PostgreSQL** for serverless database connectivity
-- Election hosting and voting system
-- Excel export for results
-- Clean, minimal UI using Tailwind CSS
+A secure, anonymous voting platform enabling organizations to host democratic elections with triple-layer fraud prevention, real-time results, and automated Excel reporting.
+
+**NOTA** (None Of The Above) is a modern, production-ready online voting application that enables organizations, student councils, educational institutions, and community groups to conduct secure, transparent elections. Built with enterprise-grade security and privacy features, NOTA ensures fair democratic processes through multi-layer fraud prevention.
 
 ---
 
