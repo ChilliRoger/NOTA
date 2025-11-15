@@ -157,6 +157,15 @@ export default function MyElections(){
               </div>
 
               <div className="flex gap-2 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <input 
+                    type="text" 
+                    value={`${process.env.NEXT_PUBLIC_APP_BASE_URL}/election/${election.id}`}
+                    readOnly 
+                    className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white font-mono"
+                    onClick={(e) => e.currentTarget.select()}
+                  />
+                </div>
                 <button
                   onClick={() => {
                     const link = `${process.env.NEXT_PUBLIC_APP_BASE_URL}/election/${election.id}`
@@ -174,9 +183,9 @@ export default function MyElections(){
                     document.body.appendChild(copied)
                     setTimeout(() => copied.remove(), 2000)
                   }}
-                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium flex-shrink-0"
                 >
-                  📋 Copy Link
+                  📋 Copy
                 </button>
 
                 <button
