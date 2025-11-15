@@ -204,9 +204,13 @@ export default function Host(){
         <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="font-medium text-green-800 mb-2">✓ Election Created Successfully!</div>
           <div className="text-sm text-gray-700 mb-2">Share this link with voters:</div>
-          <div className="p-3 bg-white border rounded text-sm font-mono overflow-x-auto whitespace-nowrap">
-            {link}
-          </div>
+          <input 
+            type="text" 
+            value={link} 
+            readOnly 
+            className="w-full p-3 bg-white border rounded text-sm font-mono"
+            onClick={(e) => e.currentTarget.select()}
+          />
           <div className="mt-3 flex gap-2">
             <button
               onClick={() => {
