@@ -121,7 +121,6 @@ export default function Home() {
                     <p className="text-sm text-gray-600 mb-2">Every vote is protected by four independent verification layers:</p>
                     <ul className="text-sm space-y-1 text-gray-600">
                       <li>✅ <strong>Email Verification</strong> - Verify your email address</li>
-                      <li>✅ <strong>Phone Verification</strong> - SMS code to your mobile (10,000 free/month)</li>
                       <li>✅ <strong>Device Fingerprinting</strong> - One vote per device</li>
                       <li>✅ <strong>IP Tracking</strong> - Maximum 3 votes per network</li>
                     </ul>
@@ -132,7 +131,6 @@ export default function Home() {
                     <ol className="text-sm space-y-1 text-gray-600 list-decimal list-inside">
                       <li>Create account with email & password</li>
                       <li>Verify your email (check inbox)</li>
-                      <li>Verify your phone number (receive SMS code)</li>
                       <li>Vote in elections (one vote per person)</li>
                     </ol>
                   </div>
